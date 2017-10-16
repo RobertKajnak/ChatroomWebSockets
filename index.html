@@ -1,0 +1,127 @@
+<ul align="center">
+	<p id="usernameDisplay"> Username: <input type="input" maxlength="13" id="usernameInput" size="24"> </p>
+	<p> <button type="button" id="registerUser" onclick="registerUsername(this)"/>Register </button></p>
+</ul>
+
+
+<br/></br>
+<form  id="roomForm" action="/rooms" align="center">
+	<p> Chatroom name: <input type="input" maxlength="13" id="roomInput" size="24"> </p>
+	<p> <button type="button" id="createChatroom" onclick="createChatroom"/> Create Chatroom </button>
+	<button type="button" id="JoinChatroom" onclick="joinChatroom"/> Join Chatroom </button> </p>
+</form>
+
+
+<script>
+
+document.getElementById("roomForm").style.visibility = "hidden";
+
+var userAndID ={
+	uname : "",
+	ID : ""
+}
+	
+function registerUsername(id) {
+	var uname = document.getElementById("usernameInput").value;
+
+	if (isValidInput(uname))
+	{			
+		var user = {
+			username : uname
+		}
+		var newID={};
+		
+		sendObjectAsJSON(user,function(newID){
+		///succsess functions
+			id.style.display = "none";
+			document.getElementById("usernameInput").style.display = "none";
+			document.getElementById("usernameDisplay").innerHTML += uname;
+			userAndID.uname = uname;
+			document.getElementById("roomForm").style.visibility = "visible";
+			console.log(userAndID);
+			
+			userAndID.ID = newID.ID;
+		},
+		function (){
+		///fail function
+			alert("Username already taken");}
+		);
+
+	}
+}
+
+function createChatroom(){
+	var chatroomName = document.getElementById("roomInput").value;
+	
+	if (isValidInput(chatroomName)){
+		var chatroomObject={
+			username: userAndID.uname,
+			ID : userAndID.ID,
+			chatroom: chatroomName
+		}
+		websocketUrl = {};
+		sendObjectAsJSON(chatroomObject,function(websocketUrl){
+			console.log("Chatroom created");
+		},function(){
+			alert("The chatroom already exists. Joining...");
+		});
+	
+	}
+}
+
+
+function joinChatroom(){
+
+}
+
+function encodeForPost(string) {
+	var regexp = /%20/g; // Reg. expr. to match %20 any number of times
+	return encodeURIComponent(string).replace(regexp,"+");
+}
+
+///Checks if the string is longer than 1 character and is strictly alpha-numeric
+function isValidInput(inputString){
+	if (inputString.length < 1){
+		alert("Username must be at least 1 character long");
+		return false;
+	}
+	else if (!/^[a-z0-9]+$/i.test(inputString)){
+		alert("The username is not alphanumeric");
+		return false;
+	}
+	return true;
+}
+
+///The second function has the response object passed to it
+function sendObjectAsJSON(objectToSend, functionIfSuccess,functionIfFail){
+	var tosend = JSON.stringify(objectToSend);
+	console.log(tosend);
+	var xmlhttp = new XMLHttpRequest();
+	xmlhttp.onreadystatechange = function(){
+		if (this.readyState == 4 && this.status==201){
+			console.log("JSON getting response" + this.responseText);
+			responseObject = JSON.parse(this.responseText);
+			functionIfSuccess(responseObject);
+		}
+		else{
+			if (this.status == 409 && this.readyState == 4){
+				functionIfFail();
+			}
+			console.log("Invalid response: " + this.status + " state: " + this.readyState + " text: ");
+		}
+	}
+	xmlhttp.open("POST", "./user");
+	xmlhttp.setRequestHeader("Content-Type","application/x-www-form-urlencoded");
+	xmlhttp.send(tosend);
+}
+/*
+var req = new XMLHttpRequest();
+req.open("POST", "/user");
+req.setRequestHeader("Content-Type","application/x-www-form-urlencoded");
+
+req.onreadystatechange = function() {
+	if ((req.readyState == 4) && (req.status == 200)) {
+		alert(req.responseText); // Display the received response
+	}
+}*/
+</script>

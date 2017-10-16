@@ -7,7 +7,7 @@
 <br/></br>
 <form  id="roomForm" action="/rooms" align="center">
 	<p> Chatroom name: <input type="input" maxlength="13" id="roomInput" size="24"> </p>
-	<p> <button type="button" id="createChatroom" onclick="createChatroom"/> Create Chatroom </button>
+	<p> <button type="button" id="createChatroomButton" onclick="createChatroom()"/> Create Chatroom </button>
 	<button type="button" id="JoinChatroom" onclick="joinChatroom"/> Join Chatroom </button> </p>
 </form>
 
@@ -30,17 +30,19 @@ function registerUsername(id) {
 			username : uname
 		}
 		var newID={};
-		
-		sendObjectAsJSON(user,function(newID){
+		sendObjectAsJSON(user,function(newID, statusCode){
 		///succsess functions
-			id.style.display = "none";
-			document.getElementById("usernameInput").style.display = "none";
-			document.getElementById("usernameDisplay").innerHTML += uname;
-			userAndID.uname = uname;
-			document.getElementById("roomForm").style.visibility = "visible";
-			console.log(userAndID);
-			
-			userAndID.ID = newID.ID;
+			console.log(statusCode);
+			if (statusCode == 201){
+				id.style.display = "none";
+				document.getElementById("usernameInput").style.display = "none";
+				document.getElementById("usernameDisplay").innerHTML += uname;
+				userAndID.uname = uname;
+				document.getElementById("roomForm").style.visibility = "visible";
+				console.log(userAndID);
+				
+				userAndID.ID = newID.ID;
+			}
 		},
 		function (){
 		///fail function
@@ -60,10 +62,17 @@ function createChatroom(){
 			chatroom: chatroomName
 		}
 		websocketUrl = {};
-		sendObjectAsJSON(chatroomObject,function(websocketUrl){
-			console.log("Chatroom created");
+		sendObjectAsJSON(chatroomObject,function(websocketUrl,statusCode){
+			switch (statusCode){
+				case 201:
+					console.log("Chatroom created");
+				break;
+				case 200:
+					alert("The chatroom already exists. Joining...");
+				break;
+			}
 		},function(){
-			alert("The chatroom already exists. Joining...");
+			alert("Something went wrong");
 		});
 	
 	}
@@ -92,22 +101,24 @@ function isValidInput(inputString){
 	return true;
 }
 
-///The second function has the response object passed to it
-function sendObjectAsJSON(objectToSend, functionIfSuccess,functionIfFail){
+///The functions will have the response object and response codes passed to them
+function sendObjectAsJSON(objectToSend, functionIfSuccess,functionIfFail, returnCode){
 	var tosend = JSON.stringify(objectToSend);
 	console.log(tosend);
 	var xmlhttp = new XMLHttpRequest();
 	xmlhttp.onreadystatechange = function(){
-		if (this.readyState == 4 && this.status==201){
-			console.log("JSON getting response" + this.responseText);
-			responseObject = JSON.parse(this.responseText);
-			functionIfSuccess(responseObject);
-		}
-		else{
-			if (this.status == 409 && this.readyState == 4){
-				functionIfFail();
+		if (this.readyState == 4){
+			if (this.status>=200 && this.status<300){
+				console.log("JSON getting response" + this.responseText);
+				responseObject = JSON.parse(this.responseText);
+				functionIfSuccess(responseObject,this.status);
 			}
-			console.log("Invalid response: " + this.status + " state: " + this.readyState + " text: ");
+			else{
+				if (this.status>=400 && this.status<500){
+					functionIfFail();
+				}
+				console.log("Invalid response: " + this.status + " state: " + this.readyState + " text: ");
+			}
 		}
 	}
 	xmlhttp.open("POST", "./user");

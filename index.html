@@ -11,10 +11,10 @@
 	<button type="button" id="JoinChatroom" onclick="joinChatroom"/> Join Chatroom </button> </p>
 </form>
 
-
+<script src="https://cdn.socket.io/socket.io-1.5.0.js"></script>
 <script>
-
 document.getElementById("roomForm").style.visibility = "hidden";
+var socket = io();
 
 var userAndID ={
 	uname : "",
@@ -30,7 +30,7 @@ function registerUsername(id) {
 			username : uname
 		}
 		var newID={};
-		sendObjectAsJSON(user,function(newID, statusCode){
+		sendObjectAsJSON("./user",user,function(newID, statusCode){
 		///succsess functions
 			console.log(statusCode);
 			if (statusCode == 201){
@@ -62,13 +62,16 @@ function createChatroom(){
 			chatroom: chatroomName
 		}
 		websocketUrl = {};
-		sendObjectAsJSON(chatroomObject,function(websocketUrl,statusCode){
+		sendObjectAsJSON("./rooms",chatroomObject,function(websocketUrl,statusCode){
 			switch (statusCode){
 				case 201:
 					console.log("Chatroom created");
+					console.log("Requesting: " + websocketUrl.url)
+					window.location.replace(websocketUrl.url);
 				break;
 				case 200:
 					alert("The chatroom already exists. Joining...");
+					window.location.replace(websocketUrl.url);
 				break;
 			}
 		},function(){
@@ -102,7 +105,7 @@ function isValidInput(inputString){
 }
 
 ///The functions will have the response object and response codes passed to them
-function sendObjectAsJSON(objectToSend, functionIfSuccess,functionIfFail, returnCode){
+function sendObjectAsJSON(postLocation,objectToSend, functionIfSuccess,functionIfFail, returnCode){
 	var tosend = JSON.stringify(objectToSend);
 	console.log(tosend);
 	var xmlhttp = new XMLHttpRequest();
@@ -121,7 +124,7 @@ function sendObjectAsJSON(objectToSend, functionIfSuccess,functionIfFail, return
 			}
 		}
 	}
-	xmlhttp.open("POST", "./user");
+	xmlhttp.open("POST", postLocation);
 	xmlhttp.setRequestHeader("Content-Type","application/x-www-form-urlencoded");
 	xmlhttp.send(tosend);
 }
@@ -135,4 +138,4 @@ req.onreadystatechange = function() {
 		alert(req.responseText); // Display the received response
 	}
 }*/
-</script>
+</script>  

@@ -1,0 +1,11 @@
+{
+  "name": "intprogchat",
+  "version": "1.0.0",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+   "socket.io": "1.5.0",
+   "md5" : "2.2.1"
+  }
+}

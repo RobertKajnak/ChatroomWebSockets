@@ -3,11 +3,9 @@
 
 var http = require("http");
 var fs = require("fs");
-var handlers = require("./handlers");
 var ss = require("./user");
 var qs = require('querystring');
 var md5 = require('md5');
-var roomJS = require("./rooms");
 var path = require('path');
 
 function start(serverPort,wsPort) {
